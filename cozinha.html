@@ -8,204 +8,197 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --red: #ff0000; --bg: #050505; --card: #0f0f0f; }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; }
-        .glass { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; }
-        .btn-action { background: #1a1a1a; border: 1px solid #333; height: 50px; width: 50px; border-radius: 12px; font-weight: 900; font-size: 20px; }
-        .btn-send { background: linear-gradient(135deg, #900, var(--red)); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-        .tab-btn { flex: 1; padding: 15px; text-align: center; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #444; border-bottom: 2px solid #111; }
-        .tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
-        .badge { background: var(--red); color: white; padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-left: 5px; }
-        input { background: #111 !important; border: 1px solid #222 !important; color: white !important; padding: 12px !important; border-radius: 10px !important; width: 100%; }
-        /* Otimização para toque no celular */
-        button:active { transform: scale(0.95); }
+        body { background: #020202; color: #fff; font-family: 'Inter', sans-serif; }
+        .item-card { background: #0a0a0a; border: 1px solid #161616; border-radius: 15px; }
+        .item-card.selected { border-color: #ff0000; background: #110000; }
+        .qty-btn { background: #161616; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+        .tab-btn { flex: 1; padding: 15px; text-align: center; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #444; border-bottom: 2px solid #161616; }
+        .tab-btn.active { color: #ff0000; border-bottom-color: #ff0000; }
+        #alarm-overlay { background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); display: none; }
+        .pulse-red { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(255, 0, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); } }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4 pb-24">
+
+    <div id="alarm-overlay" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-32 h-32 bg-red-600 rounded-full flex items-center justify-center mb-6 pulse-red">
+            <span class="text-4xl">⏰</span>
+        </div>
+        <h2 class="text-2xl font-black italic mb-2">HORA DE CONFERIR!</h2>
+        <p class="text-zinc-500 text-sm mb-8 uppercase font-bold tracking-widest">Verifique os itens que estão faltando</p>
+        <button onclick="stopAlarm()" class="w-full bg-white text-black font-black py-5 rounded-2xl uppercase">Entendido / Silenciar</button>
+    </div>
 
     <header class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-xl font-black italic tracking-tighter">ZHOU <span class="text-red-600">Pedidos</span></h1>
-            <p id="nome-loja" class="text-[10px] text-zinc-500 font-bold uppercase tracking-[3px]">Carregando...</p>
+            <h1 class="text-xl font-black italic leading-none">ZHOU <span class="text-red-600">COZINHA</span></h1>
+            <p id="nome-loja" class="text-[10px] text-zinc-500 font-bold uppercase mt-1">Carregando...</p>
         </div>
-        <div id="indicador-alerta" class="hidden animate-pulse text-red-600 font-black text-[10px] border border-red-600 px-3 py-1 rounded-full">ALERTA ATIVO</div>
+        <button id="audio-unlock" onclick="unlockAudio()" class="bg-zinc-900 px-3 py-2 rounded-lg text-[9px] font-black text-red-500 animate-bounce">🔈 ATIVAR SOM</button>
     </header>
 
-    <div class="flex mb-6 glass overflow-hidden">
-        <div onclick="tab('novo')" id="tab-novo" class="tab-btn active">Novo Pedido</div>
-        <div onclick="tab('faltas')" id="tab-faltas" class="tab-btn">Faltas na Loja <span id="count-faltas" class="badge">0</span></div>
-    </div>
+    <nav class="flex mb-6 bg-[#0a0a0a] rounded-t-xl overflow-hidden">
+        <div onclick="setTab('enviar')" id="tab-enviar" class="tab-btn active">Solicitar</div>
+        <div onclick="setTab('pendentes')" id="tab-pendentes" class="tab-btn">Faltas</div>
+    </nav>
 
-    <section id="sec-novo" class="space-y-4">
-        <div class="glass p-5 space-y-4">
-            <input type="text" id="solicitante" placeholder="SEU NOME (EX: TASSIO)">
-            <p class="text-[10px] text-zinc-600 font-black uppercase">Selecione os itens abaixo:</p>
+    <section id="sec-enviar" class="space-y-4">
+        <div class="flex gap-2">
+            <input type="text" id="solicitante" placeholder="TEU NOME" class="bg-[#0a0a0a] border border-[#161616] p-4 rounded-xl font-bold text-xs w-1/3">
+            <select id="filtro-fornecedor" onchange="renderizarCatalogo()" class="flex-1 bg-[#0a0a0a] border border-[#161616] p-4 rounded-xl font-bold text-xs">
+                <option value="">TODAS CATEGORIAS</option>
+            </select>
         </div>
-
-        <div id="grid-itens" class="grid grid-cols-1 gap-3">
-            </div>
-
-        <div id="footer-pedido" class="fixed bottom-0 left-0 w-full p-4 bg-black/80 backdrop-blur-md border-t border-zinc-900 hidden">
-            <button onclick="enviarTudo()" id="btn-finalizar" class="btn-send w-full py-5 rounded-2xl shadow-2xl shadow-red-900/20">
-                ENVIAR <span id="total-itens">0</span> ITENS AGORA
-            </button>
-        </div>
-        <div class="h-24"></div> </section>
-
-    <section id="sec-faltas" class="hidden space-y-4">
-        <div id="lista-faltas" class="space-y-3">
-            </div>
+        <div id="catalogo" class="grid grid-cols-1 gap-2"></div>
     </section>
 
-    <audio id="som-alerta" loop src=""></audio>
+    <section id="sec-pendentes" class="hidden space-y-3">
+        <div id="lista-faltas" class="space-y-2"></div>
+    </section>
+
+    <div class="fixed bottom-0 left-0 w-full p-4 bg-black/80 backdrop-blur-lg border-t border-zinc-900 flex gap-2">
+        <button onclick="enviarTudo()" id="btn-main" class="flex-1 bg-red-600 text-white font-black py-4 rounded-2xl shadow-lg uppercase text-xs tracking-widest">
+            Enviar (<span id="count-total">0</span>)
+        </button>
+    </div>
+
+    <audio id="audio-player" loop>
+        <source id="audio-source" src="" type="audio/mpeg">
+    </audio>
+
     <script>
         const sb = supabase.createClient("https://jxwxvzvxaabzoajdhetw.supabase.co", "sb_publishable_MFyO9fL-XKBzrVC0SRBOuw_bqghFOzF");
-        const urlParams = new URLSearchParams(window.location.search);
-        const lojaId = urlParams.get('loja');
+        const params = new URLSearchParams(window.location.search);
+        const unidadeId = params.get('loja');
+        
         let itensSelecionados = {};
-        let configAlerta = null;
+        let fornecedoresData = [];
+        let configAlarme = { hora: "", toque: "" };
 
         async function init() {
-            if (!lojaId) return alert("Link inválido! Use o QR Code do ADM.");
+            if(!unidadeId) return alert("Erro: ID da Loja faltando!");
             
-            // Carregar nome da loja
-            const { data: u } = await sb.from('unidades').select('nome').eq('id', lojaId).single();
-            if (u) document.getElementById('nome-loja').innerText = u.nome;
+            const { data: u } = await sb.from('unidades').select('nome').eq('id', unidadeId).single();
+            if(u) document.getElementById('nome-loja').innerText = u.nome;
 
-            carregarItensDisponiveis();
-            carregarFaltas();
-            checarAlarmes();
+            const { data: f } = await sb.from('fornecedores').select('*').order('nome');
+            fornecedoresData = f || [];
             
-            // Atualiza faltas em tempo real
-            sb.channel('cozinha').on('postgres_changes', { event: '*', schema: 'public', table: 'faltas' }, carregarFaltas).subscribe();
-            
-            // Checa alarme a cada 30 segundos
-            setInterval(checarAlarmes, 30000);
+            const selectF = document.getElementById('filtro-fornecedor');
+            f.forEach(forn => selectF.innerHTML += `<option value="${forn.id}">${forn.nome}</option>`);
+
+            renderizarCatalogo();
+            syncAlarme();
+            setInterval(checkAlarme, 30000); // Checa a cada 30 segundos
         }
 
-        async function carregarItensDisponiveis() {
-            // Pega todos os itens de todos os fornecedores para o cozinheiro escolher
-            const { data: fornecedores } = await sb.from('fornecedores').select('itens');
-            const grid = document.getElementById('grid-itens');
-            grid.innerHTML = '';
-            
-            let todosItens = [];
-            fornecedores.forEach(f => {
-                f.itens.forEach(it => {
-                    if (!todosItens.includes(it.nome)) todosItens.push(it.nome);
-                });
-            });
-
-            todosItens.sort().forEach(nome => {
-                const safe = nome.replace(/\s/g, '_');
-                grid.innerHTML += `
-                <div class="glass p-4 flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase">${nome}</span>
-                    <div class="flex items-center gap-4">
-                        <button onclick="updateQty('${nome}', -1)" class="btn-action">-</button>
-                        <span id="qty-${safe}" class="font-black text-lg w-6 text-center">0</span>
-                        <button onclick="updateQty('${nome}', 1)" class="btn-action text-red-600">+</button>
-                    </div>
-                </div>`;
-            });
-        }
-
-        function updateQty(nome, val) {
-            const safe = nome.replace(/\s/g, '_');
-            const el = document.getElementById(`qty-${safe}`);
-            let atual = parseInt(el.innerText) + val;
-            if (atual < 0) atual = 0;
-            
-            el.innerText = atual;
-            if (atual > 0) itensSelecionados[nome] = atual;
-            else delete itensSelecionados[nome];
-
-            const total = Object.keys(itensSelecionados).length;
-            document.getElementById('total-itens').innerText = total;
-            document.getElementById('footer-pedido').classList.toggle('hidden', total === 0);
-        }
-
-        async function enviarTudo() {
-            const nome = document.getElementById('solicitante').value.toUpperCase();
-            if (!nome) return alert("Digite seu nome!");
-
-            const btn = document.getElementById('btn-finalizar');
-            btn.disabled = true;
-            btn.innerText = "ENVIANDO...";
-
-            const inserts = Object.keys(itensSelecionados).map(item => ({
-                unidade_id: lojaId,
-                item_nome: item,
-                quantidade: itensSelecionados[item],
-                solicitante: nome,
-                status: 'pendente'
-            }));
-
-            const { error } = await sb.from('faltas').insert(inserts);
-
-            if (!error) {
-                alert("PEDIDO ENVIADO COM SUCESSO!");
-                location.reload();
-            } else {
-                alert("Erro ao enviar. Tente novamente.");
-                btn.disabled = false;
+        async function syncAlarme() {
+            const { data } = await sb.from('configuracoes').select('*').eq('id', 1).single();
+            if(data) {
+                configAlarme.hora = data.lembrete_hora;
+                configAlarme.toque = data.toque_url;
+                document.getElementById('audio-source').src = data.toque_url;
+                document.getElementById('audio-player').load();
             }
         }
 
-        async function carregarFaltas() {
-            const { data } = await sb.from('faltas')
-                .select('*')
-                .eq('unidade_id', lojaId)
-                .eq('status', 'pendente');
-            
-            document.getElementById('count-faltas').innerText = data.length;
-            const lista = document.getElementById('lista-faltas');
-            
-            if (data.length === 0) {
-                lista.innerHTML = '<p class="text-center py-10 text-zinc-700 font-bold uppercase text-xs">Nenhum item em falta</p>';
-                return;
-            }
-
-            lista.innerHTML = data.map(i => `
-                <div class="glass p-4 flex justify-between items-center border-l-4 border-l-amber-600">
-                    <div>
-                        <p class="text-xs font-black uppercase text-white">${i.quantidade}x ${i.item_nome}</p>
-                        <p class="text-[9px] text-zinc-500 uppercase font-bold">Por: ${i.solicitante || 'S/N'}</p>
-                    </div>
-                    <span class="text-[9px] font-black text-amber-500 italic">AGUARDANDO</span>
-                </div>
-            `).join('');
-        }
-
-        async function checarAlarmes() {
-            const { data: config } = await sb.from('configuracoes').select('*').eq('id', 1).single();
-            if (!config) return;
-
+        function checkAlarme() {
             const agora = new Date();
             const horaAtual = agora.getHours().toString().padStart(2, '0') + ":" + agora.getMinutes().toString().padStart(2, '0');
             
-            if (horaAtual === config.lembrete_hora) {
-                const audio = document.getElementById('som-alerta');
-                if (audio.src !== config.toque_url) audio.src = config.toque_url;
-                
-                document.getElementById('indicador-alerta').classList.remove('hidden');
-                audio.play().catch(() => {
-                    // Caso o navegador bloqueie o som sem interação
-                    console.log("Toque pendente de interação");
-                });
+            if(horaAtual === configAlarme.hora) {
+                startAlarm();
             }
         }
 
-        function tab(t) {
-            document.getElementById('sec-novo').classList.toggle('hidden', t !== 'novo');
-            document.getElementById('sec-faltas').classList.toggle('hidden', t !== 'faltas');
-            document.getElementById('tab-novo').classList.toggle('active', t === 'novo');
-            document.getElementById('tab-faltas').classList.toggle('active', t === 'faltas');
-            if (t === 'faltas') {
-                // Para o alarme ao entrar na aba de faltas (indica que o cozinheiro viu)
-                document.getElementById('som-alerta').pause();
-                document.getElementById('indicador-alerta').classList.add('hidden');
+        function startAlarm() {
+            const player = document.getElementById('audio-player');
+            player.play().catch(() => console.log("Áudio bloqueado pelo browser"));
+            document.getElementById('alarm-overlay').style.display = 'flex';
+        }
+
+        function stopAlarm() {
+            document.getElementById('audio-player').pause();
+            document.getElementById('alarm-overlay').style.display = 'none';
+        }
+
+        function unlockAudio() {
+            document.getElementById('audio-player').play().then(() => {
+                document.getElementById('audio-player').pause();
+                document.getElementById('audio-unlock').classList.add('hidden');
+                alert("Som Ativado! O alarme tocará no horário programado.");
+            });
+        }
+
+        function renderizarCatalogo() {
+            const fId = document.getElementById('filtro-fornecedor').value;
+            const container = document.getElementById('catalogo');
+            container.innerHTML = '';
+
+            let lista = fId ? fornecedoresData.filter(x => x.id == fId) : fornecedoresData;
+
+            lista.forEach(forn => {
+                forn.itens.forEach(item => {
+                    const nome = item.nome.toUpperCase();
+                    const qty = itensSelecionados[nome] || 0;
+                    container.innerHTML += `
+                        <div class="item-card p-4 flex justify-between items-center ${qty > 0 ? 'selected' : ''}">
+                            <div class="flex-1">
+                                <p class="text-[9px] font-black text-zinc-600 mb-1 uppercase">${forn.nome}</p>
+                                <p class="text-xs font-bold">${nome}</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <button onclick="upd('${nome}', -1)" class="qty-btn text-zinc-500">-</button>
+                                <span class="w-4 text-center font-black">${qty}</span>
+                                <button onclick="upd('${nome}', 1)" class="qty-btn text-red-600 font-black">+</button>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        function upd(n, v) {
+            let q = (itensSelecionados[n] || 0) + v;
+            if(q <= 0) delete itensSelecionados[n]; else itensSelecionados[n] = q;
+            document.getElementById('count-total').innerText = Object.values(itensSelecionados).reduce((a,b)=>a+b,0);
+            renderizarCatalogo();
+        }
+
+        async function enviarTudo() {
+            const sol = document.getElementById('solicitante').value.toUpperCase();
+            if(!sol) return alert("Identifica-te!");
+            const chaves = Object.keys(itensSelecionados);
+            if(!chaves.length) return alert("Seleciona algo!");
+
+            const dados = chaves.map(n => ({
+                unidade_id: unidadeId, item_nome: n, quantidade: itensSelecionados[n], solicitante: sol, status: 'pendente'
+            }));
+
+            const { error } = await sb.from('faltas').insert(dados);
+            if(!error) {
+                alert("ENVIADO!");
+                itensSelecionados = {};
+                document.getElementById('count-total').innerText = "0";
+                renderizarCatalogo();
             }
+        }
+
+        function setTab(t) {
+            document.getElementById('sec-enviar').classList.toggle('hidden', t !== 'enviar');
+            document.getElementById('sec-pendentes').classList.toggle('hidden', t !== 'pendentes');
+            document.getElementById('tab-enviar').classList.toggle('active', t === 'enviar');
+            document.getElementById('tab-pendentes').classList.toggle('active', t === 'pendentes');
+            if(t === 'pendentes') carregarPendentes();
+        }
+
+        async function carregarPendentes() {
+            const { data } = await sb.from('faltas').select('*').eq('unidade_id', unidadeId).eq('status', 'pendente').order('id', {ascending: false});
+            document.getElementById('lista-faltas').innerHTML = data.length ? data.map(i => `
+                <div class="bg-[#0a0a0a] p-4 rounded-xl border-l-2 border-amber-600 flex justify-between">
+                    <span class="text-xs font-bold">${i.quantidade}x ${i.item_nome}</span>
+                    <span class="text-[8px] text-amber-500 font-bold uppercase">Pendente</span>
+                </div>`).join('') : '<p class="text-center py-10 text-zinc-800 font-bold">TUDO OK</p>';
         }
 
         window.onload = init;

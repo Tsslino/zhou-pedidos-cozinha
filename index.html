@@ -73,7 +73,7 @@
                     <p class="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Configuração do Pedido</p>
                     <select id="sel-u" onchange="atualizarPreview()"></select>
                     <select id="sel-f" onchange="renderItens()"></select>
-                    <button onclick="dispararPedido()" class="btn-zhou">🚀 ENVIAR PARA WHATSAPP</button>
+                    <button onclick="dispararPedido()" class="btn-zhou italic">🚀 ENVIAR PARA WHATSAPP</button>
                 </div>
                 <div class="flex justify-center">
                     <div class="wa-mockup">
@@ -120,14 +120,14 @@
             <input type="text" id="cad-nome" placeholder="NOME DO FORNECEDOR">
             <input type="text" id="cad-tel" placeholder="WHATSAPP (55...)">
             <textarea id="cad-itens" placeholder="ITENS SEPARADOS POR VÍRGULA" class="h-32"></textarea>
-            <button onclick="salvarF()" class="btn-zhou">SALVAR PARCEIRO</button>
+            <button onclick="salvarF()" class="btn-zhou italic">SALVAR PARCEIRO</button>
             <div id="lista-fornecedores" class="space-y-2 mt-8"></div>
         </section>
 
         <section id="t-unidades" class="hidden space-y-8">
             <div class="glass p-10 max-w-md mx-auto text-center">
                 <input type="text" id="cad-u" placeholder="NOME DA LOJA" class="mb-6">
-                <button onclick="salvarU()" class="btn-zhou">GERAR QR CODES</button>
+                <button onclick="salvarU()" class="btn-zhou italic">GERAR QR CODES</button>
             </div>
             <div id="links-u" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         </section>
@@ -136,38 +136,24 @@
             <div class="dev-signature">Desenvolvido por Tassio Lino</div>
         </footer>
     </div>
+
     <script>
+        // CONFIGURAÇÃO SUPABASE
         const sb = supabase.createClient("https://jxwxvzvxaabzoajdhetw.supabase.co", "sb_publishable_MFyO9fL-XKBzrVC0SRBOuw_bqghFOzF");
+        
         let fornecedoresLocais = [];
         let selecionados = {};
         let unidadesLocais = [];
 
         async function init() {
-            carregarDados();
+            await carregarDados();
             carregarConfigAtual();
+            
+            // ESCUTA EM TEMPO REAL PARA NOVAS FALTAS
             sb.channel('db').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'faltas' }, (p) => {
                 showToast(`ALERTA: Novo item de ${p.new.item_nome}`);
                 if(!document.getElementById('t-relatorios').classList.contains('hidden')) carregarRelatorios();
             }).subscribe();
-        }
-
-        async function carregarConfigAtual() {
-            const { data } = await sb.from('configuracoes').select('*').eq('id', 1).single();
-            if(data) {
-                document.getElementById('cfg-hora').value = data.lembrete_hora;
-                document.getElementById('status-atual').innerText = "Horário de Alerta Ativo: " + data.lembrete_hora;
-            }
-        }
-
-        async function salvarConfig() {
-            const h = document.getElementById('cfg-hora').value;
-            const t = document.getElementById('cfg-toque').value;
-            if(!h) return alert("Defina o horário!");
-            const { error } = await sb.from('configuracoes').upsert([{ id: 1, lembrete_hora: h, toque_url: t }]);
-            if(!error) {
-                showToast("ALERTA ATUALIZADO!");
-                document.getElementById('status-atual').innerText = "Horário de Alerta Ativo: " + h;
-            }
         }
 
         async function carregarDados() {
@@ -175,11 +161,39 @@
             const { data: u } = await sb.from('unidades').select('*').order('nome');
             fornecedoresLocais = f || [];
             unidadesLocais = u || [];
+            
             document.getElementById('sel-u').innerHTML = u.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('filter-u').innerHTML = '<option value="TODAS">TODAS AS LOJAS</option>' + u.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('sel-f').innerHTML = '<option value="">-- FORNECEDOR --</option>' + f.map((x,i) => `<option value="${i}">${x.nome}</option>`).join('');
+            
             renderLojas(u);
             renderFornecedoresLista(f);
+        }
+
+        async function carregarRelatorios() {
+            const fid = document.getElementById('filter-u').value;
+            let query = sb.from('faltas').select('*, unidades(nome)').order('id', {ascending: false});
+            if(fid !== "TODAS") query = query.eq('unidade_id', fid);
+            
+            const { data } = await query;
+            if(!data) return;
+
+            document.getElementById('dash-pendente').innerText = data.filter(x => x.status === 'pendente').length;
+            document.getElementById('dash-concluido').innerText = data.filter(x => x.status === 'concluido').length;
+            
+            document.getElementById('table-body').innerHTML = data.map(i => `
+                <tr class="hover:bg-white/[0.01]">
+                    <td class="py-5 font-black uppercase text-zinc-500 italic text-[10px]">${i.unidades?.nome || 'Loja'}<br><span class="text-zinc-700">${i.solicitante || ''}</span></td>
+                    <td class="py-5 text-white font-bold">${i.quantidade}x ${i.item_nome}</td>
+                    <td class="py-5 text-center"><span class="status-pill ${i.status === 'concluido' ? 'bg-solicitado' : 'bg-aguardando'}">${i.status === 'concluido' ? 'SOLICITADO' : 'AGUARDANDO'}</span></td>
+                    <td class="py-5 text-right">${i.status === 'pendente' ? `<button onclick="darBaixa(${i.id})" class="bg-white text-black px-4 py-1 rounded-md font-black text-[9px]">OK</button>` : '✅'}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function darBaixa(id) {
+            await sb.from('faltas').update({ status: 'concluido' }).eq('id', id);
+            carregarRelatorios();
         }
 
         function renderItens() {
@@ -187,6 +201,7 @@
             const container = document.getElementById('lista-compra');
             container.innerHTML = ''; selecionados = {};
             if(!fornecedoresLocais[idx]) return atualizarPreview();
+            
             document.getElementById('preview-f-nome').innerText = fornecedoresLocais[idx].nome;
             fornecedoresLocais[idx].itens.forEach(it => {
                 const safe = it.nome.replace(/\s/g,'_');
@@ -235,9 +250,12 @@
             const idx = document.getElementById('sel-f').value;
             const uId = document.getElementById('sel-u').value;
             if(!idx || !Object.keys(selecionados).length) return alert("Selecione itens!");
+            
             const tel = fornecedoresLocais[idx].telefone;
             const msg = document.getElementById('whatsapp-text').innerText;
             window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`);
+            
+            // MARCAR COMO CONCLUIDO NO BANCO
             for(let item in selecionados) {
                 await sb.from('faltas').update({ status: 'concluido' }).eq('unidade_id', uId).ilike('item_nome', item).eq('status', 'pendente');
             }
@@ -245,45 +263,56 @@
             if(!document.getElementById('t-relatorios').classList.contains('hidden')) carregarRelatorios();
         }
 
-        async function carregarRelatorios() {
-            const fid = document.getElementById('filter-u').value;
-            let query = sb.from('faltas').select('*, unidades(nome)').order('id', {ascending: false});
-            if(fid !== "TODAS") query = query.eq('unidade_id', fid);
-            const { data } = await query;
-            document.getElementById('dash-pendente').innerText = data.filter(x => x.status === 'pendente').length;
-            document.getElementById('dash-concluido').innerText = data.filter(x => x.status === 'concluido').length;
-            document.getElementById('table-body').innerHTML = data.map(i => `
-                <tr class="hover:bg-white/[0.01]">
-                    <td class="py-5 font-black uppercase text-zinc-500 italic text-[10px]">${i.unidades?.nome || 'Loja'}<br><span class="text-zinc-700">${i.solicitante || ''}</span></td>
-                    <td class="py-5 text-white font-bold">${i.quantidade}x ${i.item_nome}</td>
-                    <td class="py-5 text-center"><span class="status-pill ${i.status === 'concluido' ? 'bg-solicitado' : 'bg-aguardando'}">${i.status === 'concluido' ? 'SOLICITADO' : 'AGUARDANDO'}</span></td>
-                    <td class="py-5 text-right">${i.status === 'pendente' ? `<button onclick="darBaixa(${i.id})" class="bg-white text-black px-4 py-1 rounded-md font-black text-[9px]">OK</button>` : '✅'}</td>
-                </tr>
-            `).join('');
+        async function carregarConfigAtual() {
+            const { data } = await sb.from('configuracoes').select('*').eq('id', 1).single();
+            if(data) {
+                document.getElementById('cfg-hora').value = data.lembrete_hora;
+                document.getElementById('status-atual').innerText = "Horário de Alerta Ativo: " + data.lembrete_hora;
+            }
         }
 
-        async function darBaixa(id) { await sb.from('faltas').update({ status: 'concluido' }).eq('id', id); carregarRelatorios(); }
-        
+        async function salvarConfig() {
+            const h = document.getElementById('cfg-hora').value;
+            const t = document.getElementById('cfg-toque').value;
+            if(!h) return alert("Defina o horário!");
+            const { error } = await sb.from('configuracoes').upsert([{ id: 1, lembrete_hora: h, toque_url: t }]);
+            if(!error) {
+                showToast("ALERTA ATUALIZADO!");
+                document.getElementById('status-atual').innerText = "Horário de Alerta Ativo: " + h;
+            }
+        }
+
         async function salvarF() { 
             const itArr = document.getElementById('cad-itens').value.split(',').map(i => ({ nome: i.trim().toUpperCase() }));
-            await sb.from('fornecedores').insert([{ nome: document.getElementById('cad-nome').value, telefone: document.getElementById('cad-tel').value, itens: itArr }]);
+            await sb.from('fornecedores').insert([{ nome: document.getElementById('cad-nome').value.toUpperCase(), telefone: document.getElementById('cad-tel').value, itens: itArr }]);
             location.reload(); 
         }
 
-        async function salvarU() { await sb.from('unidades').insert([{ nome: document.getElementById('cad-u').value.toUpperCase() }]); location.reload(); }
-        
+        async function salvarU() { 
+            await sb.from('unidades').insert([{ nome: document.getElementById('cad-u').value.toUpperCase() }]); 
+            location.reload(); 
+        }
+
         function renderFornecedoresLista(lista) { 
-            document.getElementById('lista-fornecedores').innerHTML = lista.map(f => `<div class="glass p-5 flex justify-between items-center text-[10px] font-black border-zinc-900"><span>${f.nome}</span><button onclick="excluirF(${f.id})" class="text-red-900">EXCLUIR</button></div>`).join(''); 
+            document.getElementById('lista-fornecedores').innerHTML = lista.map(f => `
+                <div class="glass p-5 flex justify-between items-center text-[10px] font-black border-zinc-900">
+                    <span>${f.nome}</span>
+                    <button onclick="excluirF(${f.id})" class="text-red-900">EXCLUIR</button>
+                </div>`).join(''); 
         }
 
         async function excluirF(id) { if(confirm("Remover?")) { await sb.from('fornecedores').delete().eq('id', id); carregarDados(); } }
 
         function renderLojas(u) {
-            const path = window.location.pathname.split('/').slice(0, -1).join('/') + '/';
-            const base = window.location.origin + (path === '//' ? '/' : path);
+            const base = window.location.origin + window.location.pathname.replace('index.html', '');
             document.getElementById('links-u').innerHTML = u.map(x => {
                 const link = base + "cozinha.html?loja=" + x.id;
-                return `<div class="glass p-8 text-center border-zinc-900"><p class="text-[11px] font-black mb-6 uppercase text-red-600 italic tracking-[4px]">${x.nome}</p><div id="qr-${x.id}" class="bg-white p-3 rounded-2xl inline-block mb-6 shadow-2xl"></div><button onclick="navigator.clipboard.writeText('${link}')" class="text-[9px] text-zinc-600 block mx-auto underline italic uppercase hover:text-white">Copiar Link</button></div>`;
+                return `
+                <div class="glass p-8 text-center border-zinc-900">
+                    <p class="text-[11px] font-black mb-6 uppercase text-red-600 italic tracking-[4px]">${x.nome}</p>
+                    <div id="qr-${x.id}" class="bg-white p-3 rounded-2xl inline-block mb-6 shadow-2xl"></div>
+                    <button onclick="navigator.clipboard.writeText('${link}'); alert('Copiado!')" class="text-[9px] text-zinc-600 block mx-auto underline italic uppercase hover:text-white">Copiar Link</button>
+                </div>`;
             }).join('');
             u.forEach(x => {
                 const link = base + "cozinha.html?loja=" + x.id;
