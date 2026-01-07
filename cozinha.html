@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>COZINHA | ZHOU CLOUD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --red: #ff0000; --bg: #050505; --card: #0f0f0f; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; }
+        .glass { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; }
+        .btn-action { background: #1a1a1a; border: 1px solid #333; height: 50px; width: 50px; border-radius: 12px; font-weight: 900; font-size: 20px; }
+        .btn-send { background: linear-gradient(135deg, #900, var(--red)); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        .tab-btn { flex: 1; padding: 15px; text-align: center; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #444; border-bottom: 2px solid #111; }
+        .tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+        .badge { background: var(--red); color: white; padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-left: 5px; }
+        input { background: #111 !important; border: 1px solid #222 !important; color: white !important; padding: 12px !important; border-radius: 10px !important; width: 100%; }
+        /* Otimização para toque no celular */
+        button:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="p-4">
+
+    <header class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-xl font-black italic tracking-tighter">ZHOU <span class="text-red-600">Pedidos</span></h1>
+            <p id="nome-loja" class="text-[10px] text-zinc-500 font-bold uppercase tracking-[3px]">Carregando...</p>
+        </div>
+        <div id="indicador-alerta" class="hidden animate-pulse text-red-600 font-black text-[10px] border border-red-600 px-3 py-1 rounded-full">ALERTA ATIVO</div>
+    </header>
+
+    <div class="flex mb-6 glass overflow-hidden">
+        <div onclick="tab('novo')" id="tab-novo" class="tab-btn active">Novo Pedido</div>
+        <div onclick="tab('faltas')" id="tab-faltas" class="tab-btn">Faltas na Loja <span id="count-faltas" class="badge">0</span></div>
+    </div>
+
+    <section id="sec-novo" class="space-y-4">
+        <div class="glass p-5 space-y-4">
+            <input type="text" id="solicitante" placeholder="SEU NOME (EX: TASSIO)">
+            <p class="text-[10px] text-zinc-600 font-black uppercase">Selecione os itens abaixo:</p>
+        </div>
+
+        <div id="grid-itens" class="grid grid-cols-1 gap-3">
+            </div>
+
+        <div id="footer-pedido" class="fixed bottom-0 left-0 w-full p-4 bg-black/80 backdrop-blur-md border-t border-zinc-900 hidden">
+            <button onclick="enviarTudo()" id="btn-finalizar" class="btn-send w-full py-5 rounded-2xl shadow-2xl shadow-red-900/20">
+                ENVIAR <span id="total-itens">0</span> ITENS AGORA
+            </button>
+        </div>
+        <div class="h-24"></div> </section>
+
+    <section id="sec-faltas" class="hidden space-y-4">
+        <div id="lista-faltas" class="space-y-3">
+            </div>
+    </section>
+
+    <audio id="som-alerta" loop src=""></audio>
+    <script>
+        const sb = supabase.createClient("https://jxwxvzvxaabzoajdhetw.supabase.co", "sb_publishable_MFyO9fL-XKBzrVC0SRBOuw_bqghFOzF");
+        const urlParams = new URLSearchParams(window.location.search);
+        const lojaId = urlParams.get('loja');
+        let itensSelecionados = {};
+        let configAlerta = null;
+
+        async function init() {
+            if (!lojaId) return alert("Link inválido! Use o QR Code do ADM.");
+            
+            // Carregar nome da loja
+            const { data: u } = await sb.from('unidades').select('nome').eq('id', lojaId).single();
+            if (u) document.getElementById('nome-loja').innerText = u.nome;
+
+            carregarItensDisponiveis();
+            carregarFaltas();
+            checarAlarmes();
+            
+            // Atualiza faltas em tempo real
+            sb.channel('cozinha').on('postgres_changes', { event: '*', schema: 'public', table: 'faltas' }, carregarFaltas).subscribe();
+            
+            // Checa alarme a cada 30 segundos
+            setInterval(checarAlarmes, 30000);
+        }
+
+        async function carregarItensDisponiveis() {
+            // Pega todos os itens de todos os fornecedores para o cozinheiro escolher
+            const { data: fornecedores } = await sb.from('fornecedores').select('itens');
+            const grid = document.getElementById('grid-itens');
+            grid.innerHTML = '';
+            
+            let todosItens = [];
+            fornecedores.forEach(f => {
+                f.itens.forEach(it => {
+                    if (!todosItens.includes(it.nome)) todosItens.push(it.nome);
+                });
+            });
+
+            todosItens.sort().forEach(nome => {
+                const safe = nome.replace(/\s/g, '_');
+                grid.innerHTML += `
+                <div class="glass p-4 flex justify-between items-center">
+                    <span class="text-xs font-bold uppercase">${nome}</span>
+                    <div class="flex items-center gap-4">
+                        <button onclick="updateQty('${nome}', -1)" class="btn-action">-</button>
+                        <span id="qty-${safe}" class="font-black text-lg w-6 text-center">0</span>
+                        <button onclick="updateQty('${nome}', 1)" class="btn-action text-red-600">+</button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function updateQty(nome, val) {
+            const safe = nome.replace(/\s/g, '_');
+            const el = document.getElementById(`qty-${safe}`);
+            let atual = parseInt(el.innerText) + val;
+            if (atual < 0) atual = 0;
+            
+            el.innerText = atual;
+            if (atual > 0) itensSelecionados[nome] = atual;
+            else delete itensSelecionados[nome];
+
+            const total = Object.keys(itensSelecionados).length;
+            document.getElementById('total-itens').innerText = total;
+            document.getElementById('footer-pedido').classList.toggle('hidden', total === 0);
+        }
+
+        async function enviarTudo() {
+            const nome = document.getElementById('solicitante').value.toUpperCase();
+            if (!nome) return alert("Digite seu nome!");
+
+            const btn = document.getElementById('btn-finalizar');
+            btn.disabled = true;
+            btn.innerText = "ENVIANDO...";
+
+            const inserts = Object.keys(itensSelecionados).map(item => ({
+                unidade_id: lojaId,
+                item_nome: item,
+                quantidade: itensSelecionados[item],
+                solicitante: nome,
+                status: 'pendente'
+            }));
+
+            const { error } = await sb.from('faltas').insert(inserts);
+
+            if (!error) {
+                alert("PEDIDO ENVIADO COM SUCESSO!");
+                location.reload();
+            } else {
+                alert("Erro ao enviar. Tente novamente.");
+                btn.disabled = false;
+            }
+        }
+
+        async function carregarFaltas() {
+            const { data } = await sb.from('faltas')
+                .select('*')
+                .eq('unidade_id', lojaId)
+                .eq('status', 'pendente');
+            
+            document.getElementById('count-faltas').innerText = data.length;
+            const lista = document.getElementById('lista-faltas');
+            
+            if (data.length === 0) {
+                lista.innerHTML = '<p class="text-center py-10 text-zinc-700 font-bold uppercase text-xs">Nenhum item em falta</p>';
+                return;
+            }
+
+            lista.innerHTML = data.map(i => `
+                <div class="glass p-4 flex justify-between items-center border-l-4 border-l-amber-600">
+                    <div>
+                        <p class="text-xs font-black uppercase text-white">${i.quantidade}x ${i.item_nome}</p>
+                        <p class="text-[9px] text-zinc-500 uppercase font-bold">Por: ${i.solicitante || 'S/N'}</p>
+                    </div>
+                    <span class="text-[9px] font-black text-amber-500 italic">AGUARDANDO</span>
+                </div>
+            `).join('');
+        }
+
+        async function checarAlarmes() {
+            const { data: config } = await sb.from('configuracoes').select('*').eq('id', 1).single();
+            if (!config) return;
+
+            const agora = new Date();
+            const horaAtual = agora.getHours().toString().padStart(2, '0') + ":" + agora.getMinutes().toString().padStart(2, '0');
+            
+            if (horaAtual === config.lembrete_hora) {
+                const audio = document.getElementById('som-alerta');
+                if (audio.src !== config.toque_url) audio.src = config.toque_url;
+                
+                document.getElementById('indicador-alerta').classList.remove('hidden');
+                audio.play().catch(() => {
+                    // Caso o navegador bloqueie o som sem interação
+                    console.log("Toque pendente de interação");
+                });
+            }
+        }
+
+        function tab(t) {
+            document.getElementById('sec-novo').classList.toggle('hidden', t !== 'novo');
+            document.getElementById('sec-faltas').classList.toggle('hidden', t !== 'faltas');
+            document.getElementById('tab-novo').classList.toggle('active', t === 'novo');
+            document.getElementById('tab-faltas').classList.toggle('active', t === 'faltas');
+            if (t === 'faltas') {
+                // Para o alarme ao entrar na aba de faltas (indica que o cozinheiro viu)
+                document.getElementById('som-alerta').pause();
+                document.getElementById('indicador-alerta').classList.add('hidden');
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
