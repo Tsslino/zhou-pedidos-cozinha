@@ -4,214 +4,287 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZHOU CLOUD | TASSIO LINO 👑</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    
     <style>
+        /* DESIGN PREMIUM ZHOU CLOUD */
         :root { --red: #ff0000; --bg: #020202; --card: #0a0a0a; --border: #161616; --input-bg: #0d0d0d; }
-        body { background: var(--bg); color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .futuristic { font-family: 'Orbitron', sans-serif; }
+        body { background: var(--bg); color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; background-image: radial-gradient(circle at 50% -20%, #1a0000 0%, transparent 50%); }
+        .futuristic { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; }
+        
+        /* INPUTS E CAMPOS */
         input, select, textarea { 
             background: var(--input-bg) !important; border: 1px solid var(--border) !important; 
-            color: #fff !important; padding: 14px !important; border-radius: 12px !important; outline: none !important; width: 100%;
+            color: #fff !important; padding: 16px !important; border-radius: 12px !important; outline: none !important; width: 100%; transition: 0.3s;
         }
-        .glass { background: var(--card); border: 1px solid var(--border); border-radius: 24px; }
+        input:focus { border-color: var(--red) !important; box-shadow: 0 0 15px rgba(255,0,0,0.1); }
+        
+        /* CARDS E ELEMENTOS VISUAIS */
+        .glass { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .nav-link { font-size: 10px; font-weight: 900; color: #444; cursor: pointer; text-transform: uppercase; padding: 20px; flex: 1; text-align: center; transition: 0.4s; }
+        .nav-link.active { color: var(--red); box-shadow: inset 0 -3px 0 var(--red); background: linear-gradient(to top, rgba(255,0,0,0.05), transparent); }
+        
+        /* BOTÕES */
+        .btn-zhou { background: linear-gradient(135deg, #700, var(--red)); color: #fff; padding: 20px; border-radius: 15px; font-weight: 900; width: 100%; text-transform: uppercase; cursor: pointer; box-shadow: 0 5px 20px rgba(255,0,0,0.3); }
+        .btn-danger { background: #1a0505; border: 1px solid #3d0000; color: #ff4d4d; font-size: 9px; font-weight: 900; padding: 12px 24px; border-radius: 12px; }
+        
+        /* MOCKUP WHATSAPP */
+        .wa-mockup { width: 100%; max-width: 320px; height: 480px; background: #0b141a; border-radius: 30px; border: 8px solid #1f2c33; overflow: hidden; }
+        .wa-chat-area { height: calc(100% - 85px); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; padding: 15px; display: flex; flex-direction: column; justify-content: flex-end; }
+        .wa-bubble { background: #005c4b; color: #e9edef; padding: 10px 12px; border-radius: 8px 0 8px 8px; font-size: 11px; }
+        
+        /* STATUS */
         .status-pill { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 50px; }
         .bg-aguardando { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
         .bg-solicitado { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
-        .wa-mockup { width: 100%; max-width: 320px; height: 480px; background: #0b141a; border-radius: 30px; border: 8px solid #1f2c33; overflow: hidden; position: relative; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
-        .wa-header { background: #1f2c33; padding: 35px 15px 10px; display: flex; align-items: center; gap: 10px; }
-        .wa-chat-area { height: calc(100% - 85px); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; padding: 15px; display: flex; flex-direction: column; justify-content: flex-end; }
-        .wa-bubble { background: #005c4b; color: #e9edef; padding: 10px 12px; border-radius: 8px 0 8px 8px; max-width: 85%; align-self: flex-end; font-size: 11px; position: relative; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .wa-bubble::after { content: ""; position: absolute; top: 0; right: -8px; border: 8px solid transparent; border-top-color: #005c4b; border-left-color: #005c4b; }
-        .nav-link { font-size: 10px; font-weight: 900; color: #444; cursor: pointer; text-transform: uppercase; padding: 18px; flex: 1; text-align: center; transition: 0.3s; }
-        .nav-link.active { color: var(--red); box-shadow: inset 0 -2px 0 var(--red); }
-        .btn-zhou { background: linear-gradient(135deg, #700, var(--red)); color: #fff; padding: 18px; border-radius: 15px; font-weight: 900; width: 100%; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+        
         .dev-signature { font-size: 10px; font-weight: 900; letter-spacing: 6px; text-transform: uppercase; color: transparent; background: linear-gradient(90deg, #333, #fff, #333); -webkit-background-clip: text; background-size: 200%; animation: shine 3s infinite linear; }
         @keyframes shine { 0% { background-position: -100%; } 100% { background-position: 100%; } }
-        .toast-notification { animation: slideIn 0.5s ease-out; border-left: 4px solid #ff0000; background: #111; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .hidden { display: none; }
     </style>
 </head>
 <body class="p-4 md:p-10">
-
     <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3"></div>
-
-    <div class="max-w-7xl mx-auto min-h-screen flex flex-col">
-        <header class="flex flex-col lg:flex-row justify-between items-end mb-12 gap-8">
-            <div>
-                <h1 class="futuristic text-4xl font-black text-white italic leading-none">ZHOU <span class="text-red-600">CLOUD</span></h1>
-                <p class="text-[11px] tracking-[5px] text-zinc-500 font-bold uppercase mt-2">OPERADOR: TASSIO LINO 👑</p>
-            </div>
-            <nav class="flex w-full lg:w-[750px] glass overflow-hidden border-zinc-900">
-                <div onclick="tab('pedidos')" id="b-pedidos" class="nav-link active">🛒 Compras</div>
-                <div onclick="tab('relatorios')" id="b-relatorios" class="nav-link">📊 Dashboard</div>
-                <div onclick="tab('alertas')" id="b-alertas" class="nav-link">⏰ Alarmes</div>
-                <div onclick="tab('cadastro')" id="b-cadastro" class="nav-link">Parceiros</div>
-                <div onclick="tab('unidades')" id="b-unidades" class="nav-link">Unidades</div>
-            </nav>
-        </header>
-
-        <section id="t-alertas" class="hidden glass p-10 max-w-xl mx-auto space-y-6 text-center">
-            <h2 class="futuristic text-red-600 text-xl italic">PROGRAMAR NOTIFICAÇÃO</h2>
-            <p class="text-[9px] text-zinc-600 font-black uppercase tracking-widest">Defina quando o celular da cozinha vai tocar</p>
-            <input type="time" id="cfg-hora" class="text-3xl text-center font-black">
-            <select id="cfg-toque">
-                <option value="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3">Toque Digital 1</option>
-                <option value="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3">Alerta Urgente</option>
-                <option value="https://assets.mixkit.co/active_storage/sfx/2516/2516-preview.mp3">Sirene</option>
-            </select>
-            <button onclick="salvarConfig()" class="btn-zhou italic">SALVAR CONFIGURAÇÃO</button>
-            <p id="status-atual" class="text-[10px] text-white mt-4 font-bold italic"></p>
-        </section>
-
-        <section id="t-pedidos" class="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-grow">
+    
+    <header class="max-w-7xl mx-auto w-full flex flex-col lg:flex-row justify-between items-end mb-12 gap-8">
+        <div>
+            <h1 class="futuristic text-5xl font-black text-white italic leading-none">ZHOU <span class="text-red-600 underline decoration-1 underline-offset-8">CLOUD</span></h1>
+            <p class="text-[11px] tracking-[5px] text-zinc-500 font-bold uppercase mt-4">OPERADOR: TASSIO LINO 👑</p>
+        </div>
+        
+        <nav class="flex w-full lg:w-[750px] glass overflow-hidden border-zinc-900">
+            <div onclick="tab('pedidos')" id="b-pedidos" class="nav-link active">🛒 Compras</div>
+            <div onclick="tab('relatorios')" id="b-relatorios" class="nav-link">📊 Dashboard</div>
+            <div onclick="tab('cadastro')" id="b-cadastro" class="nav-link">Parceiros</div>
+            <div onclick="tab('unidades')" id="b-unidades" class="nav-link">Unidades</div>
+        </nav>
+    </header>
+    <main class="max-w-7xl mx-auto w-full">
+        
+        <section id="t-pedidos" class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
             <div class="lg:col-span-4 space-y-8">
-                <div class="glass p-8 space-y-5">
-                    <p class="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Configuração do Pedido</p>
-                    <select id="sel-u" onchange="atualizarPreview()"></select>
-                    <select id="sel-f" onchange="renderItens()"></select>
-                    <button onclick="dispararPedido()" class="btn-zhou italic">🚀 ENVIAR PARA WHATSAPP</button>
+                
+                <div class="glass p-8 space-y-5 border-t-2 border-red-600">
+                    <p class="text-[10px] font-black uppercase text-zinc-600 tracking-widest italic">1. Configurar Origem e Destino</p>
+                    
+                    <select id="sel-u" onchange="atualizarPreview()" title="Selecione a Loja"></select>
+                    
+                    <select id="sel-f" onchange="renderItens()" title="Selecione o Fornecedor"></select>
+                    
+                    <button onclick="dispararPedido()" class="btn-zhou italic">
+                        🚀  Criar Pedido
+                    </button>
                 </div>
-                <div class="flex justify-center">
-                    <div class="wa-mockup">
-                        <div class="wa-header">
-                            <div class="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-[10px] text-white italic">ZL</div>
-                            <div class="flex flex-col">
-                                <span id="preview-f-nome" class="text-white text-[12px] font-bold leading-none italic">Fornecedor...</span>
-                                <span class="text-green-500 text-[9px]">online</span>
-                            </div>
-                        </div>
-                        <div class="wa-chat-area">
-                            <div class="wa-bubble">
-                                <span id="whatsapp-text" class="whitespace-pre-wrap italic text-zinc-400">Monte o pedido selecionando os itens ao lado...</span>
-                                <div class="text-[8px] text-right mt-1 opacity-60">agora ✔✔</div>
-                            </div>
+                
+                <div class="wa-mockup mx-auto shadow-2xl shadow-red-900/10">
+                    <div class="wa-chat-area">
+                        <div class="wa-bubble shadow-lg">
+                            <span id="whatsapp-text" class="whitespace-pre-wrap italic text-zinc-400">
+                                Aguardando seleção de itens para gerar o relatório de envio...
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="lg:col-span-8 glass p-8 min-h-[500px]">
+
+            <div class="lg:col-span-8 glass p-8 min-h-[600px] relative overflow-hidden">
+                <p class="text-[10px] font-black uppercase text-zinc-600 tracking-widest mb-8 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+                    2. Selecionar Quantidades (Clique nos itens)
+                </p>
+                
                 <div id="lista-compra" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <p class="col-span-full text-center py-20 text-zinc-800 font-black uppercase tracking-[10px]">Aguardando Seleção</p>
+                    <p class="text-zinc-700 text-sm italic">Selecione um fornecedor para listar os itens...</p>
                 </div>
             </div>
         </section>
 
-        <section id="t-relatorios" class="hidden space-y-8 flex-grow">
-            <div class="glass p-4 flex flex-col md:flex-row items-center gap-6 border-zinc-900">
-                <select id="filter-u" onchange="carregarRelatorios()" class="!w-auto bg-black border-none text-white text-xs font-bold uppercase cursor-pointer"></select>
-                <div class="flex gap-8 ml-auto mr-4">
-                    <div class="text-center"><p class="text-[8px] text-zinc-600 font-bold uppercase tracking-tighter">Aguardando</p><p id="dash-pendente" class="text-xl font-black text-amber-500">0</p></div>
-                    <div class="text-center"><p class="text-[8px] text-zinc-600 font-bold uppercase tracking-tighter">Solicitados</p><p id="dash-concluido" class="text-xl font-black text-green-500">0</p></div>
+        <section id="t-relatorios" class="hidden space-y-8">
+            
+            <div class="glass p-8 flex flex-wrap justify-between items-center gap-6 border-l-4 border-red-600">
+                <div class="flex items-center gap-6">
+                    <div class="space-y-1">
+                        <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Filtrar por Unidade</p>
+                        <select id="filter-u" onchange="carregarRelatorios()" class="!w-64"></select>
+                    </div>
+                    
+                    <button onclick="resetarSistema()" class="btn-danger italic mt-4">
+                        🗑️ ZERAR HISTÓRICO TOTAL
+                    </button>
+                </div>
+                
+                <div class="flex gap-12 border-l border-zinc-900 pl-12">
+                    <div class="text-center">
+                        <p class="text-[9px] text-zinc-500 font-black uppercase">Pendente</p>
+                        <p id="dash-pendente" class="text-4xl font-black text-amber-500 italic">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-[9px] text-zinc-500 font-black uppercase">Concluído</p>
+                        <p id="dash-concluido" class="text-4xl font-black text-green-500 italic">0</p>
+                    </div>
                 </div>
             </div>
-            <div class="glass p-8 overflow-hidden">
-                <table class="w-full text-left text-[11px]">
-                    <thead><tr class="text-zinc-600 uppercase border-b border-zinc-900"><th class="pb-4">Loja / Quem</th><th class="pb-4">Item</th><th class="pb-4 text-center">Status</th><th class="pb-4 text-right">Ação</th></tr></thead>
-                    <tbody id="table-body" class="divide-y divide-zinc-900/50"></tbody>
+
+            <div class="glass p-8">
+                <table class="w-full text-[11px]">
+                    <thead>
+                        <tr class="text-zinc-600 border-b border-zinc-900 text-left">
+                            <th class="pb-6 font-black uppercase tracking-widest">Unidade</th>
+                            <th class="pb-6 font-black uppercase tracking-widest">Item Pedido</th>
+                            <th class="pb-6 text-center font-black uppercase tracking-widest">Estado</th>
+                            <th class="pb-6 text-right font-black uppercase tracking-widest">Acção</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-zinc-900/40"></tbody>
                 </table>
             </div>
         </section>
+        <section id="t-cadastro" class="hidden glass p-10 max-w-2xl mx-auto space-y-6 border-b-2 border-red-900">
+            <h2 class="futuristic text-xl text-white italic text-center" id="titulo-cad">CADASTRAR PARCEIRO</h2>
+            
+            <input type="hidden" id="edit-id" value="">
 
-        <section id="t-cadastro" class="hidden glass p-10 max-w-2xl mx-auto space-y-6">
-            <input type="text" id="cad-nome" placeholder="NOME DO FORNECEDOR">
-            <input type="text" id="cad-tel" placeholder="WHATSAPP (55...)">
-            <textarea id="cad-itens" placeholder="ITENS SEPARADOS POR VÍRGULA" class="h-32"></textarea>
-            <button onclick="salvarF()" class="btn-zhou italic">SALVAR PARCEIRO</button>
-            <div id="lista-fornecedores" class="space-y-2 mt-8"></div>
+            <div class="space-y-4">
+                <input type="text" id="cad-nome" placeholder="NOME DO FORNECEDOR">
+                <input type="text" id="cad-tel" placeholder="WHATSAPP (EX: 5511999999999)">
+                <textarea id="cad-itens" placeholder="ITENS (SEPARE POR VÍRGULA: TOMATE, CEBOLA, BATATA...)" class="h-32"></textarea>
+                
+                <div class="flex gap-2">
+                    <button onclick="salvarF()" id="btn-salvar" class="btn-zhou">SALVAR NO SISTEMA</button>
+                    <button onclick="cancelarEdicao()" id="btn-cancelar" class="hidden bg-zinc-800 text-white px-6 rounded-xl font-bold uppercase text-[10px]">Cancelar</button>
+                </div>
+            </div>
+            
+            <div id="lista-fornecedores" class="space-y-3 mt-10 border-t border-zinc-900 pt-6"></div>
         </section>
 
-        <section id="t-unidades" class="hidden space-y-8">
-            <div class="glass p-10 max-w-md mx-auto text-center">
-                <input type="text" id="cad-u" placeholder="NOME DA LOJA" class="mb-6">
-                <button onclick="salvarU()" class="btn-zhou italic">GERAR QR CODES</button>
+        <section id="t-unidades" class="hidden space-y-12">
+            <div class="glass p-10 max-w-md mx-auto text-center space-y-6 border-t-2 border-red-600">
+                <input type="text" id="cad-u" placeholder="NOME DA NOVA UNIDADE">
+                <button onclick="salvarU()" class="btn-zhou">GERAR ACESSO COZINHA</button>
             </div>
             <div id="links-u" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         </section>
+    </main>
 
-        <footer class="mt-auto py-12 text-center border-t border-zinc-900/30">
-            <div class="dev-signature">Desenvolvido por Tassio Lino</div>
-        </footer>
-    </div>
+    <footer class="mt-20 py-10 text-center">
+        <div class="dev-signature">Developed by Tassio Lino</div>
+    </footer>
 
     <script>
-        // CONFIGURAÇÃO SUPABASE
         const sb = supabase.createClient("https://jxwxvzvxaabzoajdhetw.supabase.co", "sb_publishable_MFyO9fL-XKBzrVC0SRBOuw_bqghFOzF");
-        
-        let fornecedoresLocais = [];
-        let selecionados = {};
-        let unidadesLocais = [];
+        let fornecedoresLocais = [], selecionados = {}, unidadesLocais = [];
 
         async function init() {
             await carregarDados();
-            carregarConfigAtual();
-            
-            // ESCUTA EM TEMPO REAL PARA NOVAS FALTAS
-            sb.channel('db').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'faltas' }, (p) => {
-                showToast(`ALERTA: Novo item de ${p.new.item_nome}`);
-                if(!document.getElementById('t-relatorios').classList.contains('hidden')) carregarRelatorios();
-            }).subscribe();
+            sb.channel('realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'faltas' }, () => carregarRelatorios()).subscribe();
         }
 
         async function carregarDados() {
             const { data: f } = await sb.from('fornecedores').select('*').order('nome');
             const { data: u } = await sb.from('unidades').select('*').order('nome');
-            fornecedoresLocais = f || [];
-            unidadesLocais = u || [];
+            fornecedoresLocais = f || []; unidadesLocais = u || [];
             
-            document.getElementById('sel-u').innerHTML = u.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('filter-u').innerHTML = '<option value="TODAS">TODAS AS LOJAS</option>' + u.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('sel-f').innerHTML = '<option value="">-- FORNECEDOR --</option>' + f.map((x,i) => `<option value="${i}">${x.nome}</option>`).join('');
+            document.getElementById('sel-u').innerHTML = u.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
+            document.getElementById('filter-u').innerHTML = '<option value="TODAS">TODAS AS UNIDADES</option>' + u.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
+            document.getElementById('sel-f').innerHTML = '<option value="">-- SELECIONE FORNECEDOR --</option>' + f.map((x,i) => `<option value="${i}">${x.nome.toUpperCase()}</option>`).join('');
             
             renderLojas(u);
             renderFornecedoresLista(f);
         }
 
+        // --- FUNÇÕES DE CADASTRO E EDIÇÃO DE FORNECEDOR ---
+
+        // Prepara os campos para editar um fornecedor existente
+        function prepararEdicao(id) {
+            const f = fornecedoresLocais.find(item => item.id === id);
+            if(!f) return;
+
+            document.getElementById('edit-id').value = f.id;
+            document.getElementById('cad-nome').value = f.nome;
+            document.getElementById('cad-tel').value = f.telefone;
+            document.getElementById('cad-itens').value = f.itens.map(i => i.nome).join(', ');
+            
+            document.getElementById('titulo-cad').innerText = "EDITANDO: " + f.nome;
+            document.getElementById('btn-salvar').innerText = "ATUALIZAR DADOS";
+            document.getElementById('btn-cancelar').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('cad-nome').value = "";
+            document.getElementById('cad-tel').value = "";
+            document.getElementById('cad-itens').value = "";
+            document.getElementById('titulo-cad').innerText = "CADASTRAR PARCEIRO";
+            document.getElementById('btn-salvar').innerText = "SALVAR NO SISTEMA";
+            document.getElementById('btn-cancelar').classList.add('hidden');
+        }
+
+        async function salvarF() { 
+            const id = document.getElementById('edit-id').value;
+            const nome = document.getElementById('cad-nome').value.toUpperCase();
+            const tel = document.getElementById('cad-tel').value;
+            const itArr = document.getElementById('cad-itens').value.split(',').map(i => ({ nome: i.trim().toUpperCase() }));
+
+            if(id) {
+                // MODO EDIÇÃO (UPDATE)
+                const { error } = await sb.from('fornecedores').update({ nome, telefone: tel, itens: itArr }).eq('id', id);
+                if(!error) { showToast("PARCEIRO ATUALIZADO!"); cancelarEdicao(); carregarDados(); }
+            } else {
+                // MODO NOVO (INSERT)
+                const { error } = await sb.from('fornecedores').insert([{ nome, telefone: tel, itens: itArr }]);
+                if(!error) { showToast("PARCEIRO SALVO!"); carregarDados(); }
+            }
+        }
+
+        // --- RESTO DA LÓGICA DO SISTEMA ---
+
         async function carregarRelatorios() {
             const fid = document.getElementById('filter-u').value;
             let query = sb.from('faltas').select('*, unidades(nome)').order('id', {ascending: false});
             if(fid !== "TODAS") query = query.eq('unidade_id', fid);
-            
             const { data } = await query;
             if(!data) return;
-
             document.getElementById('dash-pendente').innerText = data.filter(x => x.status === 'pendente').length;
             document.getElementById('dash-concluido').innerText = data.filter(x => x.status === 'concluido').length;
-            
             document.getElementById('table-body').innerHTML = data.map(i => `
-                <tr class="hover:bg-white/[0.01]">
-                    <td class="py-5 font-black uppercase text-zinc-500 italic text-[10px]">${i.unidades?.nome || 'Loja'}<br><span class="text-zinc-700">${i.solicitante || ''}</span></td>
-                    <td class="py-5 text-white font-bold">${i.quantidade}x ${i.item_nome}</td>
-                    <td class="py-5 text-center"><span class="status-pill ${i.status === 'concluido' ? 'bg-solicitado' : 'bg-aguardando'}">${i.status === 'concluido' ? 'SOLICITADO' : 'AGUARDANDO'}</span></td>
-                    <td class="py-5 text-right">${i.status === 'pendente' ? `<button onclick="darBaixa(${i.id})" class="bg-white text-black px-4 py-1 rounded-md font-black text-[9px]">OK</button>` : '✅'}</td>
-                </tr>
-            `).join('');
+                <tr class="border-b border-zinc-900/40 hover:bg-zinc-900/20 transition">
+                    <td class="py-5 font-bold text-zinc-400 uppercase tracking-tighter">${i.unidades?.nome || 'LOJA'}</td>
+                    <td class="py-5 text-white font-medium">${i.quantidade}x ${i.item_nome}</td>
+                    <td class="py-5 text-center"><span class="status-pill ${i.status === 'concluido' ? 'bg-solicitado' : 'bg-aguardando'}">${i.status}</span></td>
+                    <td class="py-5 text-right">${i.status === 'pendente' ? `<button onclick="darBaixa(${i.id})" class="bg-white text-black px-4 py-1.5 rounded font-black text-[9px] uppercase">OK</button>` : '✅'}</td>
+                </tr>`).join('');
         }
 
-        async function darBaixa(id) {
-            await sb.from('faltas').update({ status: 'concluido' }).eq('id', id);
-            carregarRelatorios();
+        async function resetarSistema() {
+            if(confirm("Deseja apagar TUDO?")) {
+                if(prompt("Digite RESET para confirmar:") === "RESET") {
+                    await sb.from('faltas').delete().neq('id', 0);
+                    showToast("SISTEMA REINICIADO!"); carregarRelatorios();
+                }
+            }
         }
 
         function renderItens() {
             const idx = document.getElementById('sel-f').value;
             const container = document.getElementById('lista-compra');
             container.innerHTML = ''; selecionados = {};
-            if(!fornecedoresLocais[idx]) return atualizarPreview();
-            
-            document.getElementById('preview-f-nome').innerText = fornecedoresLocais[idx].nome;
+            if(!fornecedoresLocais[idx]) return;
             fornecedoresLocais[idx].itens.forEach(it => {
                 const safe = it.nome.replace(/\s/g,'_');
                 container.innerHTML += `
-                <div class="bg-[#080808] p-6 rounded-2xl flex justify-between items-center border border-zinc-900">
-                    <span class="text-[10px] font-black uppercase text-zinc-500">${it.nome}</span>
+                <div class="glass p-5 flex justify-between items-center border-zinc-900">
+                    <span class="text-[11px] font-black uppercase">${it.nome}</span>
                     <div class="flex items-center gap-4">
-                        <button onclick="upd('${it.nome}', -1)" class="w-8 h-8 rounded-lg bg-zinc-900 hover:bg-red-600 font-bold">-</button>
-                        <span id="q-${safe}" class="text-white font-black w-4 text-center">0</span>
-                        <button onclick="upd('${it.nome}', 1)" class="w-8 h-8 rounded-lg bg-zinc-900 hover:bg-red-600 font-bold">+</button>
+                        <button onclick="upd('${it.nome}',-1)" class="w-9 h-9 bg-zinc-900 rounded-lg">-</button>
+                        <span id="q-${safe}" class="font-black text-red-600 text-lg w-6 text-center">0</span>
+                        <button onclick="upd('${it.nome}',1)" class="w-9 h-9 bg-zinc-900 rounded-lg">+</button>
                     </div>
                 </div>`;
             });
@@ -230,104 +303,46 @@
         function atualizarPreview() {
             const uId = document.getElementById('sel-u').value;
             const uNome = unidadesLocais.find(x => x.id == uId)?.nome || "Loja";
-            let msg = `*ZHOU CLOUD - PEDIDO*\n*UNIDADE:* ${uNome}\n\n`;
-            let temItem = false;
-            for(let it in selecionados) {
-                msg += `🔴 *${selecionados[it]}x* ${it}\n`;
-                temItem = true;
-            }
-            const display = document.getElementById('whatsapp-text');
-            if(temItem) {
-                display.innerText = msg;
-                display.classList.remove('text-zinc-400', 'italic');
-            } else {
-                display.innerText = "Monte o pedido selecionando os itens ao lado...";
-                display.classList.add('text-zinc-400', 'italic');
-            }
+            let msg = `*ZHOU CLOUD - PEDIDO*\n*UNIDADE:* ${uNome.toUpperCase()}\n\n`;
+            let has = false;
+            for(let it in selecionados) { msg += `🔴 *${selecionados[it]}x* ${it}\n`; has = true; }
+            document.getElementById('whatsapp-text').innerText = has ? msg : "Selecione itens...";
         }
 
         async function dispararPedido() {
             const idx = document.getElementById('sel-f').value;
-            const uId = document.getElementById('sel-u').value;
-            if(!idx || !Object.keys(selecionados).length) return alert("Selecione itens!");
-            
-            const tel = fornecedoresLocais[idx].telefone;
-            const msg = document.getElementById('whatsapp-text').innerText;
-            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`);
-            
-            // MARCAR COMO CONCLUIDO NO BANCO
-            for(let item in selecionados) {
-                await sb.from('faltas').update({ status: 'concluido' }).eq('unidade_id', uId).ilike('item_nome', item).eq('status', 'pendente');
-            }
-            showToast("SUCESSO! Pedido enviado.");
-            if(!document.getElementById('t-relatorios').classList.contains('hidden')) carregarRelatorios();
+            if(!idx || !Object.keys(selecionados).length) return;
+            window.open(`https://wa.me/${fornecedoresLocais[idx].telefone}?text=${encodeURIComponent(document.getElementById('whatsapp-text').innerText)}`);
+            for(let it in selecionados) await sb.from('faltas').update({ status: 'concluido' }).ilike('item_nome', it).eq('status', 'pendente');
+            showToast("ENVIADO!"); carregarRelatorios();
         }
 
-        async function carregarConfigAtual() {
-            const { data } = await sb.from('configuracoes').select('*').eq('id', 1).single();
-            if(data) {
-                document.getElementById('cfg-hora').value = data.lembrete_hora;
-                document.getElementById('status-atual').innerText = "Horário de Alerta Ativo: " + data.lembrete_hora;
-            }
-        }
+        async function darBaixa(id) { await sb.from('faltas').update({ status: 'concluido' }).eq('id', id); carregarRelatorios(); }
+        async function salvarU() { await sb.from('unidades').insert([{ nome: document.getElementById('cad-u').value.toUpperCase() }]); location.reload(); }
 
-        async function salvarConfig() {
-            const h = document.getElementById('cfg-hora').value;
-            const t = document.getElementById('cfg-toque').value;
-            if(!h) return alert("Defina o horário!");
-            const { error } = await sb.from('configuracoes').upsert([{ id: 1, lembrete_hora: h, toque_url: t }]);
-            if(!error) {
-                showToast("ALERTA ATUALIZADO!");
-                document.getElementById('status-atual').innerText = "Horário de Alerta Ativo: " + h;
-            }
-        }
-
-        async function salvarF() { 
-            const itArr = document.getElementById('cad-itens').value.split(',').map(i => ({ nome: i.trim().toUpperCase() }));
-            await sb.from('fornecedores').insert([{ nome: document.getElementById('cad-nome').value.toUpperCase(), telefone: document.getElementById('cad-tel').value, itens: itArr }]);
-            location.reload(); 
-        }
-
-        async function salvarU() { 
-            await sb.from('unidades').insert([{ nome: document.getElementById('cad-u').value.toUpperCase() }]); 
-            location.reload(); 
+        function renderLojas(u) {
+            const base = window.location.origin + window.location.pathname.replace('index.html', '');
+            document.getElementById('links-u').innerHTML = u.map(x => `
+                <div class="glass p-8 text-center">
+                    <p class="font-black mb-5 uppercase text-[10px] text-zinc-500">${x.nome}</p>
+                    <div id="qr-${x.id}" class="bg-white p-3 inline-block rounded-2xl mb-6"></div>
+                    <button onclick="navigator.clipboard.writeText('${base}cozinha.html?loja=${x.id}'); alert('Copiado!')" class="block w-full text-[9px] font-black text-red-600 underline">Copiar Link</button>
+                </div>`).join('');
+            u.forEach(x => new QRCode(document.getElementById(`qr-${x.id}`), { text: base + "cozinha.html?loja=" + x.id, width: 140, height: 140 }));
         }
 
         function renderFornecedoresLista(lista) { 
             document.getElementById('lista-fornecedores').innerHTML = lista.map(f => `
-                <div class="glass p-5 flex justify-between items-center text-[10px] font-black border-zinc-900">
-                    <span>${f.nome}</span>
-                    <button onclick="excluirF(${f.id})" class="text-red-900">EXCLUIR</button>
+                <div class="glass p-4 flex justify-between items-center text-[10px] font-black">
+                    <span class="tracking-widest">${f.nome}</span>
+                    <div class="flex gap-4">
+                        <button onclick="prepararEdicao(${f.id})" class="text-amber-500 uppercase">Editar</button>
+                        <button onclick="excluirF(${f.id})" class="text-red-900 uppercase">Remover</button>
+                    </div>
                 </div>`).join(''); 
         }
 
-        async function excluirF(id) { if(confirm("Remover?")) { await sb.from('fornecedores').delete().eq('id', id); carregarDados(); } }
-
-        function renderLojas(u) {
-            const base = window.location.origin + window.location.pathname.replace('index.html', '');
-            document.getElementById('links-u').innerHTML = u.map(x => {
-                const link = base + "cozinha.html?loja=" + x.id;
-                return `
-                <div class="glass p-8 text-center border-zinc-900">
-                    <p class="text-[11px] font-black mb-6 uppercase text-red-600 italic tracking-[4px]">${x.nome}</p>
-                    <div id="qr-${x.id}" class="bg-white p-3 rounded-2xl inline-block mb-6 shadow-2xl"></div>
-                    <button onclick="navigator.clipboard.writeText('${link}'); alert('Copiado!')" class="text-[9px] text-zinc-600 block mx-auto underline italic uppercase hover:text-white">Copiar Link</button>
-                </div>`;
-            }).join('');
-            u.forEach(x => {
-                const link = base + "cozinha.html?loja=" + x.id;
-                new QRCode(document.getElementById(`qr-${x.id}`), { text: link, width: 120, height: 120 });
-            });
-        }
-
-        function showToast(msg) {
-            const container = document.getElementById('toast-container');
-            const div = document.createElement('div');
-            div.className = "toast-notification text-white p-5 rounded-2xl font-black text-[10px] uppercase shadow-2xl shadow-red-900/20";
-            div.innerText = msg;
-            container.appendChild(div);
-            setTimeout(() => div.remove(), 5000);
-        }
+        async function excluirF(id) { if(confirm("Excluir?")) { await sb.from('fornecedores').delete().eq('id', id); carregarDados(); } }
 
         function tab(t) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
@@ -335,6 +350,11 @@
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             document.getElementById('b-'+t).classList.add('active');
             if(t === 'relatorios') carregarRelatorios();
+        }
+
+        function showToast(m) { 
+            const d = document.createElement('div'); d.className = "glass p-4 text-white font-black text-xs uppercase border-red-600 border-l-4 animate-bounce"; 
+            d.innerText = m; document.getElementById('toast-container').appendChild(d); setTimeout(() => d.remove(), 3000);
         }
 
         window.onload = init;
