@@ -105,6 +105,9 @@
         </section>
 
         <section id="t-relatorios" class="hidden space-y-8">
+            <button onclick="copiarPendentes()" class="bg-zinc-800 border border-zinc-700 text-zinc-300 font-black text-[9px] px-6 py-3 rounded-xl uppercase hover:bg-zinc-700 transition ml-2">
+    📋 Copiar Lista Pendente
+</button>
             
             <div class="glass p-8 flex flex-wrap justify-between items-center gap-6 border-l-4 border-red-600">
                 <div class="flex items-center gap-6">
@@ -177,6 +180,34 @@
     </footer>
 
     <script>
+        async function copiarPendentes() {
+    const fid = document.getElementById('filter-u').value;
+    const uNome = document.getElementById('filter-u').options[document.getElementById('filter-u').selectedIndex].text;
+    
+    // Buscamos os dados atuais da tabela (apenas o que está na tela)
+    let query = sb.from('faltas').select('*').eq('status', 'pendente');
+    if(fid !== "TODAS") query = query.eq('unidade_id', fid);
+    
+    const { data, error } = await query;
+
+    if (error || !data || data.length === 0) {
+        showToast("NADA PENDENTE PARA COPIAR");
+        return;
+    }
+
+    // Monta o texto: "Quantidade x Nome do Item"
+    let textoCopia = `*PENDÊNCIAS - ${uNome}*\n\n`;
+    data.forEach(item => {
+        textoCopia += `${item.quantidade}x ${item.item_nome}\n`;
+    });
+
+    // Copia para a área de transferência
+    navigator.clipboard.writeText(textoCopia).then(() => {
+        showToast("LISTA COPIADA!");
+    }).catch(err => {
+        showToast("ERRO AO COPIAR");
+    });
+}
         const sb = supabase.createClient("https://jxwxvzvxaabzoajdhetw.supabase.co", "sb_publishable_MFyO9fL-XKBzrVC0SRBOuw_bqghFOzF");
         let fornecedoresLocais = [], selecionados = {}, unidadesLocais = [];
 
