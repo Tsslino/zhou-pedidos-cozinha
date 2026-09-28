@@ -105,9 +105,14 @@
         </section>
 
         <section id="t-relatorios" class="hidden space-y-8">
-            <button onclick="copiarPendentes()" class="bg-zinc-800 border border-zinc-700 text-zinc-300 font-black text-[9px] px-6 py-3 rounded-xl uppercase hover:bg-zinc-700 transition ml-2">
-    📋 Copiar Lista Pendente
-</button>
+            <div class="flex flex-wrap gap-3 items-center">
+                <button onclick="copiarPendentes()" class="bg-zinc-800 border border-zinc-700 text-zinc-300 font-black text-[9px] px-6 py-3 rounded-xl uppercase hover:bg-zinc-700 transition">
+                    📋 Copiar Lista Pendente
+                </button>
+                <button onclick="marcarTodosPendentesConcluidos()" class="bg-emerald-900/40 border border-emerald-700/50 text-emerald-300 font-black text-[9px] px-6 py-3 rounded-xl uppercase hover:bg-emerald-900/60 transition">
+                    ✅ Dar OK em Todos os Pendentes
+                </button>
+            </div>
             
             <div class="glass p-8 flex flex-wrap justify-between items-center gap-6 border-l-4 border-red-600">
                 <div class="flex items-center gap-6">
@@ -133,12 +138,13 @@
                 </div>
             </div>
 
-            <div class="glass p-8">
+            <div class="glass p-8 overflow-x-auto">
                 <table class="w-full text-[11px]">
                     <thead>
                         <tr class="text-zinc-600 border-b border-zinc-900 text-left">
                             <th class="pb-6 font-black uppercase tracking-widest">Unidade</th>
                             <th class="pb-6 font-black uppercase tracking-widest">Item Pedido</th>
+                            <th class="pb-6 font-black uppercase tracking-widest">Detalhes (Operador / Data)</th>
                             <th class="pb-6 text-center font-black uppercase tracking-widest">Estado</th>
                             <th class="pb-6 text-right font-black uppercase tracking-widest">Acção</th>
                         </tr>
@@ -147,6 +153,7 @@
                 </table>
             </div>
         </section>
+
         <section id="t-cadastro" class="hidden glass p-10 max-w-2xl mx-auto space-y-6 border-b-2 border-red-900">
             <h2 class="futuristic text-xl text-white italic text-center" id="titulo-cad">CADASTRAR PARCEIRO</h2>
             
@@ -180,36 +187,9 @@
     </footer>
 
     <script>
-        async function copiarPendentes() {
-    const fid = document.getElementById('filter-u').value;
-    const uNome = document.getElementById('filter-u').options[document.getElementById('filter-u').selectedIndex].text;
-    
-    // Buscamos os dados atuais da tabela (apenas o que está na tela)
-    let query = sb.from('faltas').select('*').eq('status', 'pendente');
-    if(fid !== "TODAS") query = query.eq('unidade_id', fid);
-    
-    const { data, error } = await query;
-
-    if (error || !data || data.length === 0) {
-        showToast("NADA PENDENTE PARA COPIAR");
-        return;
-    }
-
-    // Monta o texto: "Quantidade x Nome do Item"
-    let textoCopia = `*PENDÊNCIAS - ${uNome}*\n\n`;
-    data.forEach(item => {
-        textoCopia += `${item.quantidade}x ${item.item_nome}\n`;
-    });
-
-    // Copia para a área de transferência
-    navigator.clipboard.writeText(textoCopia).then(() => {
-        showToast("LISTA COPIADA!");
-    }).catch(err => {
-        showToast("ERRO AO COPIAR");
-    });
-}
         const sb = supabase.createClient("https://jxwxvzvxaabzoajdhetw.supabase.co", "sb_publishable_MFyO9fL-XKBzrVC0SRBOuw_bqghFOzF");
         let fornecedoresLocais = [], selecionados = {}, unidadesLocais = [];
+        const operadorAtual = "Tassio Lino"; // Pode ser parametrizado se necessário
 
         async function init() {
             await carregarDados();
@@ -227,11 +207,51 @@
             
             renderLojas(u);
             renderFornecedoresLista(f);
+            carregarRelatorios();
         }
 
-        // --- FUNÇÕES DE CADASTRO E EDIÇÃO DE FORNECEDOR ---
+        async function copiarPendentes() {
+            const fid = document.getElementById('filter-u').value;
+            const uNome = document.getElementById('filter-u').options[document.getElementById('filter-u').selectedIndex].text;
+            
+            let query = sb.from('faltas').select('*').eq('status', 'pendente');
+            if(fid !== "TODAS") query = query.eq('unidade_id', fid);
+            
+            const { data, error } = await query;
 
-        // Prepara os campos para editar um fornecedor existente
+            if (error || !data || data.length === 0) {
+                showToast("NADA PENDENTE PARA COPIAR");
+                return;
+            }
+
+            let textoCopia = `*PENDÊNCIAS - ${uNome}*\n\n`;
+            data.forEach(item => {
+                textoCopia += `${item.quantidade}x ${item.item_nome}\n`;
+            });
+
+            navigator.clipboard.writeText(textoCopia).then(() => {
+                showToast("LISTA COPIADA!");
+            }).catch(err => {
+                showToast("ERRO AO COPIAR");
+            });
+        }
+
+        async function marcarTodosPendentesConcluidos() {
+            if(!confirm("Deseja marcar todos os itens pendentes da visualização atual como concluídos?")) return;
+            
+            const fid = document.getElementById('filter-u').value;
+            let query = sb.from('faltas').update({ status: 'concluido' }).eq('status', 'pendente');
+            if(fid !== "TODAS") query = query.eq('unidade_id', fid);
+
+            const { error } = await query;
+            if(!error) {
+                showToast("TODOS MARCADOS COMO CONCLUÍDOS!");
+                carregarRelatorios();
+            } else {
+                showToast("ERRO AO ATUALIZAR STATUS");
+            }
+        }
+
         function prepararEdicao(id) {
             const f = fornecedoresLocais.find(item => item.id === id);
             if(!f) return;
@@ -264,17 +284,13 @@
             const itArr = document.getElementById('cad-itens').value.split(',').map(i => ({ nome: i.trim().toUpperCase() }));
 
             if(id) {
-                // MODO EDIÇÃO (UPDATE)
                 const { error } = await sb.from('fornecedores').update({ nome, telefone: tel, itens: itArr }).eq('id', id);
                 if(!error) { showToast("PARCEIRO ATUALIZADO!"); cancelarEdicao(); carregarDados(); }
             } else {
-                // MODO NOVO (INSERT)
                 const { error } = await sb.from('fornecedores').insert([{ nome, telefone: tel, itens: itArr }]);
                 if(!error) { showToast("PARCEIRO SALVO!"); carregarDados(); }
             }
         }
-
-        // --- RESTO DA LÓGICA DO SISTEMA ---
 
         async function carregarRelatorios() {
             const fid = document.getElementById('filter-u').value;
@@ -282,15 +298,25 @@
             if(fid !== "TODAS") query = query.eq('unidade_id', fid);
             const { data } = await query;
             if(!data) return;
+
             document.getElementById('dash-pendente').innerText = data.filter(x => x.status === 'pendente').length;
             document.getElementById('dash-concluido').innerText = data.filter(x => x.status === 'concluido').length;
-            document.getElementById('table-body').innerHTML = data.map(i => `
+            
+            document.getElementById('table-body').innerHTML = data.map(i => {
+                const dataFormatada = i.data_pedido ? `${i.data_pedido} às ${i.hora_pedido || ''}` : '-';
+                const operador = i.operador || operadorAtual;
+                return `
                 <tr class="border-b border-zinc-900/40 hover:bg-zinc-900/20 transition">
                     <td class="py-5 font-bold text-zinc-400 uppercase tracking-tighter">${i.unidades?.nome || 'LOJA'}</td>
                     <td class="py-5 text-white font-medium">${i.quantidade}x ${i.item_nome}</td>
+                    <td class="py-5 text-zinc-400 text-[10px]">
+                        <span class="block font-bold text-zinc-300">👤 ${operador}</span>
+                        <span class="block text-zinc-500">📅 ${dataFormatada}</span>
+                    </td>
                     <td class="py-5 text-center"><span class="status-pill ${i.status === 'concluido' ? 'bg-solicitado' : 'bg-aguardando'}">${i.status}</span></td>
                     <td class="py-5 text-right">${i.status === 'pendente' ? `<button onclick="darBaixa(${i.id})" class="bg-white text-black px-4 py-1.5 rounded font-black text-[9px] uppercase">OK</button>` : '✅'}</td>
-                </tr>`).join('');
+                </tr>`;
+            }).join('');
         }
 
         async function resetarSistema() {
@@ -343,13 +369,42 @@
         async function dispararPedido() {
             const idx = document.getElementById('sel-f').value;
             if(!idx || !Object.keys(selecionados).length) return;
+            
+            const dataAgora = new Date().toLocaleDateString('pt-BR');
+            const horaAgora = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
             window.open(`https://wa.me/${fornecedoresLocais[idx].telefone}?text=${encodeURIComponent(document.getElementById('whatsapp-text').innerText)}`);
-            for(let it in selecionados) await sb.from('faltas').update({ status: 'concluido' }).ilike('item_nome', it).eq('status', 'pendente');
-            showToast("ENVIADO!"); carregarRelatorios();
+            
+            for(let it in selecionados) {
+                await sb.from('faltas').update({ 
+                    status: 'concluido',
+                    operador: operadorAtual,
+                    data_pedido: dataAgora,
+                    hora_pedido: horaAgora
+                }).ilike('item_nome', it).eq('status', 'pendente');
+            }
+            
+            showToast("ENVIADO!"); 
+            carregarRelatorios();
         }
 
-        async function darBaixa(id) { await sb.from('faltas').update({ status: 'concluido' }).eq('id', id); carregarRelatorios(); }
-        async function salvarU() { await sb.from('unidades').insert([{ nome: document.getElementById('cad-u').value.toUpperCase() }]); location.reload(); }
+        async function darBaixa(id) { 
+            const dataAgora = new Date().toLocaleDateString('pt-BR');
+            const horaAgora = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+            
+            await sb.from('faltas').update({ 
+                status: 'concluido',
+                operador: operadorAtual,
+                data_pedido: dataAgora,
+                hora_pedido: horaAgora
+            }).eq('id', id); 
+            carregarRelatorios(); 
+        }
+
+        async function salvarU() { 
+            await sb.from('unidades').insert([{ nome: document.getElementById('cad-u').value.toUpperCase() }]); 
+            location.reload(); 
+        }
 
         function renderLojas(u) {
             const base = window.location.origin + window.location.pathname.replace('index.html', '');
