@@ -59,7 +59,7 @@
         <div id="lista-faltas" class="space-y-2"></div>
     </section>
 
-    <footer class="mt-20 py-10 text-center">
+    <footer class="mt-16 py-6 text-center">
         <div class="dev-signature">Developed by Tassio Lino</div>
     </footer>
 
@@ -83,7 +83,7 @@
         let configAlarme = { hora: "", toque: "" };
 
         async function init() {
-            if(!unidadeId) return alert("Erro: ID da Loja faltando!");
+            if(!unidadeId) return alert("Erro: ID da Loja faltando no link!");
             
             const { data: u } = await sb.from('unidades').select('nome').eq('id', unidadeId).single();
             if(u) document.getElementById('nome-loja').innerText = u.nome;
@@ -92,7 +92,7 @@
             fornecedoresData = f || [];
             
             const selectF = document.getElementById('filtro-fornecedor');
-            f.forEach(forn => selectF.innerHTML += `<option value="${forn.id}">${forn.nome}</option>`);
+            if(f) f.forEach(forn => selectF.innerHTML += `<option value="${forn.id}">${forn.nome}</option>`);
 
             renderizarCatalogo();
             syncAlarme();
@@ -104,8 +104,10 @@
             if(data) {
                 configAlarme.hora = data.lembrete_hora;
                 configAlarme.toque = data.toque_url;
-                document.getElementById('audio-source').src = data.toque_url;
-                document.getElementById('audio-player').load();
+                if(data.toque_url) {
+                    document.getElementById('audio-source').src = data.toque_url;
+                    document.getElementById('audio-player').load();
+                }
             }
         }
 
@@ -133,6 +135,8 @@
                 document.getElementById('audio-player').pause();
                 document.getElementById('audio-unlock').classList.add('hidden');
                 alert("Som Ativado! O alarme tocará no horário programado.");
+            }).catch(() => {
+                alert("Toque na tela para liberar o áudio.");
             });
         }
 
@@ -143,23 +147,30 @@
 
             let lista = fId ? fornecedoresData.filter(x => x.id == fId) : fornecedoresData;
 
+            if(!lista || lista.length === 0) {
+                container.innerHTML = '<p class="text-center text-zinc-600 py-10 text-xs font-bold">Nenhum item cadastrado</p>';
+                return;
+            }
+
             lista.forEach(forn => {
-                forn.itens.forEach(item => {
-                    const nome = item.nome.toUpperCase();
-                    const qty = itensSelecionados[nome] || 0;
-                    container.innerHTML += `
-                        <div class="item-card p-4 flex justify-between items-center ${qty > 0 ? 'selected' : ''}">
-                            <div class="flex-1">
-                                <p class="text-[9px] font-black text-zinc-600 mb-1 uppercase">${forn.nome}</p>
-                                <p class="text-xs font-bold">${nome}</p>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <button onclick="upd('${nome}', -1)" class="qty-btn text-zinc-500 active:scale-95">-</button>
-                                <span class="w-6 text-center font-black text-red-500 text-base">${qty}</span>
-                                <button onclick="upd('${nome}', 1)" class="qty-btn text-red-600 font-black active:scale-95">+</button>
-                            </div>
-                        </div>`;
-                });
+                if(forn.itens) {
+                    forn.itens.forEach(item => {
+                        const nome = item.nome.toUpperCase();
+                        const qty = itensSelecionados[nome] || 0;
+                        container.innerHTML += `
+                            <div class="item-card p-4 flex justify-between items-center ${qty > 0 ? 'selected' : ''}">
+                                <div class="flex-1">
+                                    <p class="text-[9px] font-black text-zinc-600 mb-1 uppercase">${forn.nome}</p>
+                                    <p class="text-xs font-bold">${nome}</p>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <button onclick="upd('${nome}', -1)" class="qty-btn text-zinc-500 active:scale-95">-</button>
+                                    <span class="w-6 text-center font-black text-red-500 text-base">${qty}</span>
+                                    <button onclick="upd('${nome}', 1)" class="qty-btn text-red-600 font-black active:scale-95">+</button>
+                                </div>
+                            </div>`;
+                    });
+                }
             });
         }
 

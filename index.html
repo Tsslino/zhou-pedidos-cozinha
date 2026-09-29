@@ -11,37 +11,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     
     <style>
-        /* DESIGN PREMIUM ZHOU CLOUD */
         :root { --red: #ff0000; --bg: #020202; --card: #0a0a0a; --border: #161616; --input-bg: #0d0d0d; }
         body { background: var(--bg); color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; background-image: radial-gradient(circle at 50% -20%, #1a0000 0%, transparent 50%); }
         .futuristic { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; }
-        
-        /* INPUTS E CAMPOS */
         input, select, textarea { 
             background: var(--input-bg) !important; border: 1px solid var(--border) !important; 
             color: #fff !important; padding: 16px !important; border-radius: 12px !important; outline: none !important; width: 100%; transition: 0.3s;
         }
         input:focus { border-color: var(--red) !important; box-shadow: 0 0 15px rgba(255,0,0,0.1); }
-        
-        /* CARDS E ELEMENTOS VISUAIS */
         .glass { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .nav-link { font-size: 10px; font-weight: 900; color: #444; cursor: pointer; text-transform: uppercase; padding: 20px; flex: 1; text-align: center; transition: 0.4s; }
         .nav-link.active { color: var(--red); box-shadow: inset 0 -3px 0 var(--red); background: linear-gradient(to top, rgba(255,0,0,0.05), transparent); }
-        
-        /* BOTÕES */
         .btn-zhou { background: linear-gradient(135deg, #700, var(--red)); color: #fff; padding: 20px; border-radius: 15px; font-weight: 900; width: 100%; text-transform: uppercase; cursor: pointer; box-shadow: 0 5px 20px rgba(255,0,0,0.3); }
         .btn-danger { background: #1a0505; border: 1px solid #3d0000; color: #ff4d4d; font-size: 9px; font-weight: 900; padding: 12px 24px; border-radius: 12px; }
-        
-        /* MOCKUP WHATSAPP */
         .wa-mockup { width: 100%; max-width: 320px; height: 480px; background: #0b141a; border-radius: 30px; border: 8px solid #1f2c33; overflow: hidden; }
         .wa-chat-area { height: calc(100% - 85px); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; padding: 15px; display: flex; flex-direction: column; justify-content: flex-end; }
         .wa-bubble { background: #005c4b; color: #e9edef; padding: 10px 12px; border-radius: 8px 0 8px 8px; font-size: 11px; }
-        
-        /* STATUS */
         .status-pill { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 50px; }
         .bg-aguardando { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
         .bg-solicitado { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
-        
         .dev-signature { font-size: 10px; font-weight: 900; letter-spacing: 6px; text-transform: uppercase; color: transparent; background: linear-gradient(90deg, #333, #fff, #333); -webkit-background-clip: text; background-size: 200%; animation: shine 3s infinite linear; }
         @keyframes shine { 0% { background-position: -100%; } 100% { background-position: 100%; } }
         .hidden { display: none; }
@@ -66,19 +54,12 @@
     <main class="max-w-7xl mx-auto w-full">
         
         <section id="t-pedidos" class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            
             <div class="lg:col-span-4 space-y-8">
-                
                 <div class="glass p-8 space-y-5 border-t-2 border-red-600">
                     <p class="text-[10px] font-black uppercase text-zinc-600 tracking-widest italic">1. Configurar Origem e Destino</p>
-                    
                     <select id="sel-u" onchange="atualizarPreview()" title="Selecione a Loja"></select>
-                    
                     <select id="sel-f" onchange="renderItens()" title="Selecione o Fornecedor"></select>
-                    
-                    <button onclick="dispararPedido()" class="btn-zhou italic">
-                        🚀  Criar Pedido
-                    </button>
+                    <button onclick="dispararPedido()" class="btn-zhou italic">🚀 Criar Pedido</button>
                 </div>
                 
                 <div class="wa-mockup mx-auto shadow-2xl shadow-red-900/10">
@@ -97,7 +78,6 @@
                     <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
                     2. Selecionar Quantidades (Clique nos itens)
                 </p>
-                
                 <div id="lista-compra" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <p class="text-zinc-700 text-sm italic">Selecione um fornecedor para listar os itens...</p>
                 </div>
@@ -120,10 +100,7 @@
                         <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Filtrar por Unidade</p>
                         <select id="filter-u" onchange="carregarRelatorios()" class="!w-64"></select>
                     </div>
-                    
-                    <button onclick="resetarSistema()" class="btn-danger italic mt-4">
-                        🗑️ ZERAR HISTÓRICO TOTAL
-                    </button>
+                    <button onclick="resetarSistema()" class="btn-danger italic mt-4">🗑️ ZERAR HISTÓRICO TOTAL</button>
                 </div>
                 
                 <div class="flex gap-12 border-l border-zinc-900 pl-12">
@@ -156,20 +133,16 @@
 
         <section id="t-cadastro" class="hidden glass p-10 max-w-2xl mx-auto space-y-6 border-b-2 border-red-900">
             <h2 class="futuristic text-xl text-white italic text-center" id="titulo-cad">CADASTRAR PARCEIRO</h2>
-            
             <input type="hidden" id="edit-id" value="">
-
             <div class="space-y-4">
                 <input type="text" id="cad-nome" placeholder="NOME DO FORNECEDOR">
                 <input type="text" id="cad-tel" placeholder="WHATSAPP (EX: 5511999999999)">
                 <textarea id="cad-itens" placeholder="ITENS (SEPARE POR VÍRGULA: TOMATE, CEBOLA, BATATA...)" class="h-32"></textarea>
-                
                 <div class="flex gap-2">
                     <button onclick="salvarF()" id="btn-salvar" class="btn-zhou">SALVAR NO SISTEMA</button>
                     <button onclick="cancelarEdicao()" id="btn-cancelar" class="hidden bg-zinc-800 text-white px-6 rounded-xl font-bold uppercase text-[10px]">Cancelar</button>
                 </div>
             </div>
-            
             <div id="lista-fornecedores" class="space-y-3 mt-10 border-t border-zinc-900 pt-6"></div>
         </section>
 
@@ -189,7 +162,7 @@
     <script>
         const sb = supabase.createClient("https://jxwxvzvxaabzoajdhetw.supabase.co", "sb_publishable_MFyO9fL-XKBzrVC0SRBOuw_bqghFOzF");
         let fornecedoresLocais = [], selecionados = {}, unidadesLocais = [];
-        const operadorAtual = "Tassio Lino"; // Pode ser parametrizado se necessário
+        const operadorAtual = "Tassio Lino";
 
         async function init() {
             await carregarDados();
@@ -201,66 +174,51 @@
             const { data: u } = await sb.from('unidades').select('*').order('nome');
             fornecedoresLocais = f || []; unidadesLocais = u || [];
             
-            document.getElementById('sel-u').innerHTML = u.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
-            document.getElementById('filter-u').innerHTML = '<option value="TODAS">TODAS AS UNIDADES</option>' + u.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
-            document.getElementById('sel-f').innerHTML = '<option value="">-- SELECIONE FORNECEDOR --</option>' + f.map((x,i) => `<option value="${i}">${x.nome.toUpperCase()}</option>`).join('');
+            document.getElementById('sel-u').innerHTML = u && u.length ? u.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('') : '<option value="">NENHUMA UNIDADE</option>';
+            document.getElementById('filter-u').innerHTML = '<option value="TODAS">TODAS AS UNIDADES</option>' + (u ? u.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('') : '');
+            document.getElementById('sel-f').innerHTML = '<option value="">-- SELECIONE FORNECEDOR --</option>' + (f ? f.map((x,i) => `<option value="${i}">${x.nome.toUpperCase()}</option>`).join('') : '');
             
-            renderLojas(u);
-            renderFornecedoresLista(f);
+            renderLojas(u || []);
+            renderFornecedoresLista(f || []);
             carregarRelatorios();
         }
 
         async function copiarPendentes() {
             const fid = document.getElementById('filter-u').value;
             const uNome = document.getElementById('filter-u').options[document.getElementById('filter-u').selectedIndex].text;
-            
             let query = sb.from('faltas').select('*').eq('status', 'pendente');
             if(fid !== "TODAS") query = query.eq('unidade_id', fid);
             
             const { data, error } = await query;
-
             if (error || !data || data.length === 0) {
                 showToast("NADA PENDENTE PARA COPIAR");
                 return;
             }
 
             let textoCopia = `*PENDÊNCIAS - ${uNome}*\n\n`;
-            data.forEach(item => {
-                textoCopia += `${item.quantidade}x ${item.item_nome}\n`;
-            });
+            data.forEach(item => { textoCopia += `${item.quantidade}x ${item.item_nome}\n`; });
 
-            navigator.clipboard.writeText(textoCopia).then(() => {
-                showToast("LISTA COPIADA!");
-            }).catch(err => {
-                showToast("ERRO AO COPIAR");
-            });
+            navigator.clipboard.writeText(textoCopia).then(() => { showToast("LISTA COPIADA!"); }).catch(() => { showToast("ERRO AO COPIAR"); });
         }
 
         async function marcarTodosPendentesConcluidos() {
             if(!confirm("Deseja marcar todos os itens pendentes da visualização atual como concluídos?")) return;
-            
             const fid = document.getElementById('filter-u').value;
             let query = sb.from('faltas').update({ status: 'concluido' }).eq('status', 'pendente');
             if(fid !== "TODAS") query = query.eq('unidade_id', fid);
 
             const { error } = await query;
-            if(!error) {
-                showToast("TODOS MARCADOS COMO CONCLUÍDOS!");
-                carregarRelatorios();
-            } else {
-                showToast("ERRO AO ATUALIZAR STATUS");
-            }
+            if(!error) { showToast("TODOS MARCADOS COMO CONCLUÍDOS!"); carregarRelatorios(); }
+            else { showToast("ERRO AO ATUALIZAR STATUS"); }
         }
 
         function prepararEdicao(id) {
             const f = fornecedoresLocais.find(item => item.id === id);
             if(!f) return;
-
             document.getElementById('edit-id').value = f.id;
             document.getElementById('cad-nome').value = f.nome;
             document.getElementById('cad-tel').value = f.telefone;
             document.getElementById('cad-itens').value = f.itens.map(i => i.nome).join(', ');
-            
             document.getElementById('titulo-cad').innerText = "EDITANDO: " + f.nome;
             document.getElementById('btn-salvar').innerText = "ATUALIZAR DADOS";
             document.getElementById('btn-cancelar').classList.remove('hidden');
@@ -295,7 +253,7 @@
         async function carregarRelatorios() {
             const fid = document.getElementById('filter-u').value;
             let query = sb.from('faltas').select('*, unidades(nome)').order('id', {ascending: false});
-            if(fid !== "TODAS") query = query.eq('unidade_id', fid);
+            if(fid && fid !== "TODAS") query = query.eq('unidade_id', fid);
             const { data } = await query;
             if(!data) return;
 
@@ -402,7 +360,9 @@
         }
 
         async function salvarU() { 
-            await sb.from('unidades').insert([{ nome: document.getElementById('cad-u').value.toUpperCase() }]); 
+            const nomeNovaLoja = document.getElementById('cad-u').value.trim().toUpperCase();
+            if(!nomeNovaLoja) return alert("Digite o nome da unidade!");
+            await sb.from('unidades').insert([{ nome: nomeNovaLoja }]); 
             location.reload(); 
         }
 
